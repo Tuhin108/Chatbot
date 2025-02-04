@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistral AI Chatbot</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #0a0a0a;
+            color: #00ffff;
+            height: 100%;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: rgba(0, 255, 255, 0.1);
+            border-right: 2px solid #00ffff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .new-chat-btn {
+            padding: 10px;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #ff00ff;
+            border: none;
+            border-radius: 5px;
+            color: #0a0a0a;
+            cursor: none;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .new-chat-btn:hover {
+            background-color: #00ffff;
+            color: #0a0a0a;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-history-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: rgba(0, 255, 255, 0.2);
+            border-radius: 5px;
+            cursor: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-history-item:hover {
+            background-color: rgba(0, 255, 255, 0.3);
+        }
+
+        .chat-history-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+        }
+
+        .chat-history-item p {
+            margin: 0;
+            font-size: 0.8em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin: 0;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .chat-window {
+            flex: 1;
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: rgba(255, 0, 255, 0.2);
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: rgba(0, 255, 255, 0.2);
+            align-self: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Orbitron', sans-serif;
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #ff00ff;
+            border: none;
+            border-radius: 5px;
+            color: #0a0a0a;
+            cursor: none;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #00ffff;
+            color: #0a0a0a;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .glitch-effect {
+            animation: glitch 1s linear infinite;
+        }
+
+        @keyframes glitch {
+            2%, 64% {
+                transform: translate(2px,0) skew(0deg);
+            }
+            4%, 60% {
+                transform: translate(-2px,0) skew(0deg);
+            }
+            62% {
+                transform: translate(0,0) skew(5deg); 
+            }
+        }
+
+        .neon-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+            animation: neon-flow 5s linear infinite;
+        }
+
+        @keyframes neon-flow {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        #cursor-highlight {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(0, 255, 255, 0.5);
+            pointer-events: none;
+            mix-blend-mode: screen;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor-highlight"></div>
+    <div class="container">
+        <div class="sidebar">
+            <button class="new-chat-btn" onclick="newChat()">New Chat</button>
+            <div class="chat-history" id="chatHistory">
+                <!-- Chat history items will be added here dynamically -->
+            </div>
+        </div>
+        <div class="main-content">
+            <header>
+                <h1 class="glitch-effect">Mistral AI Chatbot</h1>
+            </header>
+            <div class="chat-container">
+                <div class="chat-window" id="chatWindow">
+                    <div class="message bot-message">Welcome to Mistral AI Chatbot. How can I assist you today?</div>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="textInput" placeholder="Enter your message...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="neon-line"></div>
+
+    <script>
+        let currentChatId = Date.now();
+        let chatHistory = [];
+
+        function newChat() {
+            currentChatId = Date.now();
+            document.getElementById('chatWindow').innerHTML = '<div class="message bot-message">Welcome to a new chat. How can I assist you today?</div>';
+            updateChatHistory();
+        }
+
+        function updateChatHistory() {
+            const chatHistoryElement = document.getElementById('chatHistory');
+            chatHistoryElement.innerHTML = '';
+            chatHistory.forEach((chat, index) => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-history-item';
+                const date = new Date(chat.id);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                chatItem.innerHTML = `
+                    <h3>Chat ${index + 1} - ${formattedDate}</h3>
+                    <p>${chat.messages[0]?.content || 'Empty chat'}</p>
+                `;
+                chatItem.onclick = () => loadChat(chat.id);
+                chatHistoryElement.appendChild(chatItem);
+            });
+        }
+
+        function loadChat(chatId) {
+            const chat = chatHistory.find(c => c.id === chatId);
+            if (chat) {
+                currentChatId = chat.id;
+                document.getElementById('chatWindow').innerHTML = chat.messages.map(m => 
+                    `<div class="message ${m.type}-message">${m.content}</div>`
+                ).join('');
+            }
+        }
+
+        async function sendMessage() {
+            const chatWindow = document.getElementById('chatWindow');
+            const textInput = document.getElementById('textInput');
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = textInput.value;
+            chatWindow.appendChild(userMessage);
+
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.textContent = 'Thinking...';
+            chatWindow.appendChild(botMessage);
+
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: textInput.value }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate response');
+                }
+
+                const data = await response.json();
+                botMessage.textContent = data.response;
+
+                // Update chat history
+                let chat = chatHistory.find(c => c.id === currentChatId);
+                if (!chat) {
+                    chat = { id: currentChatId, messages: [] };
+                    chatHistory.unshift(chat);
+                }
+                chat.messages.push({ type: 'user', content: userMessage.textContent });
+                chat.messages.push({ type: 'bot', content: botMessage.textContent });
+                updateChatHistory();
+            } catch (error) {
+                console.error('Error:', error);
+                botMessage.textContent = 'An error occurred while generating a response.';
+            }
+
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            textInput.value = '';
+        }
+
+        // Allow sending message with Enter key
+        document.getElementById('textInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Cursor highlight
+        const cursorHighlight = document.getElementById('cursor-highlight');
+        let isClicked = false;
+
+        document.addEventListener('mousemove', (e) => {
+            cursorHighlight.style.left = `${e.clientX}px`;
+            cursorHighlight.style.top = `${e.clientY}px`;
+        });
+
+        document.addEventListener('mousedown', () => {
+            isClicked = true;
+            cursorHighlight.style.transform = 'scale(0.8)';
+            cursorHighlight.style.backgroundColor = 'rgba(255, 0, 255, 0.8)';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isClicked = false;
+            cursorHighlight.style.transform = 'scale(1)';
+            cursorHighlight.style.backgroundColor = 'rgba(0, 255, 255, 0.5)';
+        });
+
+        // Blink effect
+        setInterval(() => {
+            if (isClicked) {
+                cursorHighlight.style.opacity = cursorHighlight.style.opacity === '1' ? '0.5' : '1';
+            } else {
+                cursorHighlight.style.opacity = '1';
+            }
+        }, 100);
+
+        // Initialize
+        newChat();
+    </script>
+</body>
+</html>
+
